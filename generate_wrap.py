@@ -8,17 +8,17 @@ TEMPLATE_PATH = "/tmp/model3_template.png"
 OUTPUT_PATH = "/home/user/model3_customwrap1/Paw_Patrol.png"
 SIZE = 1024
 
-# Paw Patrol color palette
-BLUE        = (91,  191, 239)   # sky blue (main)
-BLUE_DARK   = (30,  120, 190)   # deep blue
-RED         = (224, 52,  52)    # Marshall red
-YELLOW      = (255, 210, 40)    # Rubble yellow
-ORANGE      = (240, 130, 30)    # Zuma orange
-GREEN       = (60,  180, 75)    # Rocky green
-PURPLE      = (140, 80,  200)   # Skye purple
-TEAL        = (0,   180, 170)   # Everest teal
-PAW_BROWN   = (120, 70,  30)    # paw print brown
-PAW_LIGHT   = (200, 140, 90)    # paw print light
+# Paw Patrol color palette — vivid/saturated so nothing reads as white
+BLUE        = (14,  107, 175)   # deep Paw Patrol blue
+BLUE_DARK   = (8,   55,  110)   # very dark navy
+RED         = (210, 30,  30)    # Marshall red
+YELLOW      = (255, 195, 0)     # Rubble yellow
+ORANGE      = (220, 95,  0)     # Zuma orange
+GREEN       = (20,  140, 40)    # Rocky green
+PURPLE      = (110, 30,  160)   # Skye purple
+TEAL        = (0,   140, 130)   # Everest teal
+PAW_BROWN   = (90,  45,  10)    # dark paw print brown
+PAW_LIGHT   = (180, 110, 50)    # mid-tone paw tan
 WHITE       = (255, 255, 255)
 
 
@@ -80,12 +80,12 @@ def make_background(size: int) -> Image.Image:
 def scatter_paws(draw: ImageDraw.ImageDraw, rng: random.Random) -> None:
     """Randomly scatter paw prints across the image."""
     colors = [PAW_BROWN, PAW_LIGHT, RED, YELLOW, ORANGE, GREEN, PURPLE, TEAL, WHITE]
-    for _ in range(55):
+    for _ in range(70):
         cx = rng.randint(40, SIZE - 40)
         cy = rng.randint(40, SIZE - 40)
-        sz = rng.randint(14, 38)
+        sz = rng.randint(28, 65)   # much bigger
         color = rng.choice(colors)
-        alpha = rng.randint(120, 210)
+        alpha = rng.randint(200, 255)   # fully opaque
         angle = rng.uniform(-40, 40)
 
         # Rotate a temp image and paste
@@ -118,7 +118,7 @@ def add_stripes(img: Image.Image) -> None:
         for width_offset in range(-8, 9):
             x = offset + width_offset
             draw.line([(x, 0), (x - SIZE // 2, SIZE)],
-                      fill=(r, g, b, 18), width=1)
+                      fill=(r, g, b, 80), width=14)
     overlay = overlay.filter(ImageFilter.GaussianBlur(2))
     img.alpha_composite(overlay)
 
