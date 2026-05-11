@@ -145,18 +145,13 @@ def add_large_center_paw(img: Image.Image) -> None:
 
 def apply_template_mask(design: Image.Image, template: Image.Image) -> Image.Image:
     """
-    Composite the design so only the opaque (wrappable) areas from the
-    template remain visible. Semi-transparent template pixels are blended
-    to preserve the car body line-art overlay.
+    Keep only the parts of the design that fall inside the car body shape
+    defined by the template's alpha channel. The template pixels themselves
+    are pure white, so we use only the alpha as a cutout mask.
     """
     result = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 0))
-
-    # Paste design using template alpha as mask
     template_alpha = template.split()[3]
     result.paste(design, mask=template_alpha)
-
-    # Overlay the template line-art on top
-    result.alpha_composite(template)
     return result
 
 
