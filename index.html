@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tesla Model 3 — Custom Wrap Designer</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #12121a;
+      --surface2: #1a1a26;
+      --border: #2a2a40;
+      --accent: #e31937;
+      --accent2: #ff6b35;
+      --text: #f0f0f8;
+      --muted: #8888aa;
+      --radius: 10px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    header .logo { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+    header .logo span { color: var(--accent); }
+    header .sub { font-size: 13px; color: var(--muted); margin-left: auto; }
+
+    .workspace {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 300px;
+      min-width: 300px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 18px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    /* Presets */
+    .preset-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    .preset-btn {
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 8px;
+      cursor: pointer;
+      background: var(--surface2);
+      text-align: center;
+      font-size: 12px;
+      color: var(--text);
+      transition: border-color 0.15s, transform 0.1s;
+    }
+    .preset-btn:hover { border-color: var(--accent); transform: translateY(-1px); }
+    .preset-btn.active { border-color: var(--accent); background: #1e0a0f; }
+    .preset-swatch {
+      height: 32px;
+      border-radius: 6px;
+      margin-bottom: 6px;
+    }
+
+    /* Panels */
+    .panel-list { display: flex; flex-direction: column; gap: 10px; }
+    .panel-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .panel-label { font-size: 13px; flex: 1; }
+    .color-swatch {
+      width: 32px; height: 32px;
+      border-radius: 6px;
+      border: 2px solid var(--border);
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+    .color-swatch input[type=color] {
+      position: absolute; inset: -4px;
+      width: calc(100% + 8px); height: calc(100% + 8px);
+      opacity: 0; cursor: pointer;
+    }
+
+    /* Pattern selector */
+    .pattern-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .pattern-btn {
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      padding: 8px 4px 6px;
+      cursor: pointer;
+      background: var(--surface2);
+      text-align: center;
+      font-size: 11px;
+      color: var(--muted);
+      transition: border-color 0.15s;
+    }
+    .pattern-btn:hover { border-color: #666; color: var(--text); }
+    .pattern-btn.active { border-color: var(--accent); color: var(--text); }
+    .pattern-preview {
+      width: 100%; height: 36px;
+      border-radius: 5px;
+      margin-bottom: 5px;
+    }
+
+    /* Sliders */
+    .slider-row { display: flex; flex-direction: column; gap: 6px; }
+    .slider-header { display: flex; justify-content: space-between; font-size: 13px; }
+    .slider-val { color: var(--accent); font-weight: 600; }
+    input[type=range] {
+      width: 100%; accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    /* Finish selector */
+    .finish-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .finish-btn {
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 4px;
+      cursor: pointer;
+      background: var(--surface2);
+      text-align: center;
+      font-size: 11px;
+      color: var(--muted);
+      transition: border-color 0.15s;
+    }
+    .finish-btn:hover { border-color: #666; color: var(--text); }
+    .finish-btn.active { border-color: var(--accent); color: var(--text); }
+    .finish-icon { font-size: 18px; display: block; margin-bottom: 4px; }
+
+    /* Action buttons */
+    .btn {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      border: none; border-radius: var(--radius);
+      padding: 11px 18px; font-size: 14px; font-weight: 600;
+      cursor: pointer; transition: opacity 0.15s, transform 0.1s;
+    }
+    .btn:hover { opacity: 0.88; transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+    .btn-primary { background: var(--accent); color: #fff; width: 100%; }
+    .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); width: 100%; }
+
+    /* ── Canvas area ── */
+    .canvas-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
+      gap: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .car-stage {
+      position: relative;
+      width: 100%;
+      max-width: 820px;
+    }
+
+    #mainCanvas {
+      width: 100%;
+      height: auto;
+      border-radius: 14px;
+      display: block;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.7);
+    }
+
+    .view-toggle {
+      display: flex; gap: 8px;
+    }
+    .view-btn {
+      padding: 7px 18px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--muted);
+      cursor: pointer; font-size: 13px;
+      transition: all 0.15s;
+    }
+    .view-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    .badge {
+      position: absolute; bottom: 14px; right: 14px;
+      background: rgba(0,0,0,0.5); backdrop-filter: blur(6px);
+      border: 1px solid var(--border);
+      border-radius: 6px; padding: 4px 10px;
+      font-size: 11px; color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Model<span> 3</span> Wrap Designer</div>
+  <div class="sub">Custom Vinyl Wrap Studio</div>
+</header>
+
+<div class="workspace">
+  <!-- Sidebar -->
+  <div class="sidebar">
+
+    <!-- Presets -->
+    <div>
+      <div class="section-title">Quick Presets</div>
+      <div class="preset-grid" id="presetGrid"></div>
+    </div>
+
+    <!-- Body panels -->
+    <div>
+      <div class="section-title">Panel Colors</div>
+      <div class="panel-list" id="panelList"></div>
+    </div>
+
+    <!-- Pattern -->
+    <div>
+      <div class="section-title">Pattern</div>
+      <div class="pattern-grid" id="patternGrid"></div>
+    </div>
+
+    <!-- Finish -->
+    <div>
+      <div class="section-title">Finish</div>
+      <div class="finish-grid" id="finishGrid"></div>
+    </div>
+
+    <!-- Sliders -->
+    <div>
+      <div class="section-title">Effects</div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="slider-row">
+          <div class="slider-header"><span>Pattern Scale</span><span class="slider-val" id="scaleVal">50%</span></div>
+          <input type="range" id="patternScale" min="10" max="100" value="50">
+        </div>
+        <div class="slider-row">
+          <div class="slider-header"><span>Pattern Opacity</span><span class="slider-val" id="opacityVal">70%</span></div>
+          <input type="range" id="patternOpacity" min="0" max="100" value="70">
+        </div>
+        <div class="slider-row">
+          <div class="slider-header"><span>Gradient Angle</span><span class="slider-val" id="angleVal">135°</span></div>
+          <input type="range" id="gradientAngle" min="0" max="360" value="135">
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button class="btn btn-primary" onclick="downloadWrap()">⬇ Download PNG</button>
+      <button class="btn btn-secondary" onclick="randomize()">🎲 Randomize</button>
+    </div>
+
+  </div>
+
+  <!-- Canvas -->
+  <div class="canvas-area">
+    <div class="view-toggle">
+      <button class="view-btn active" id="vSide" onclick="setView('side')">Side View</button>
+      <button class="view-btn" id="vTop" onclick="setView('top')">Top View</button>
+      <button class="view-btn" id="vFront" onclick="setView('front')">Front View</button>
+    </div>
+    <div class="car-stage">
+      <canvas id="mainCanvas" width="820" height="460"></canvas>
+      <div class="badge">Live Preview</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+//  State
+// ─────────────────────────────────────────────
+const state = {
+  view: 'side',
+  pattern: 'solid',
+  finish: 'gloss',
+  patternScale: 50,
+  patternOpacity: 70,
+  gradientAngle: 135,
+  panels: {
+    body:    '#1a1a2e',
+    roof:    '#0f0f1a',
+    hood:    '#1a1a2e',
+    trunk:   '#1a1a2e',
+    bumpers: '#111122',
+    trim:    '#c0c0d0',
+    windows: '#1a2535',
+  }
+};
+
+// ─────────────────────────────────────────────
+//  Presets
+// ─────────────────────────────────────────────
+const PRESETS = [
+  { name: 'Stealth',   colors: { body:'#111111', roof:'#0a0a0a', hood:'#111111', trunk:'#111111', bumpers:'#0d0d0d', trim:'#222222', windows:'#0a1520' }, pattern:'solid',    finish:'matte',  gradient:[135,'#111111','#1a1a1a'] },
+  { name: 'Glacier',   colors: { body:'#dde8f0', roof:'#b8cdd8', hood:'#dde8f0', trunk:'#dde8f0', bumpers:'#ccd8e4', trim:'#ffffff', windows:'#c0d8ea' }, pattern:'solid',    finish:'gloss',  gradient:[180,'#dde8f0','#b8cdd8'] },
+  { name: 'Sunset',    colors: { body:'#c0392b', roof:'#922b21', hood:'#c0392b', trunk:'#c0392b', bumpers:'#a93226', trim:'#f0c040', windows:'#1a2030' }, pattern:'gradient', finish:'gloss',  gradient:[45,'#ff4500','#c0392b'] },
+  { name: 'Cyberpunk', colors: { body:'#0a0a1a', roof:'#000010', hood:'#0a0a1a', trunk:'#0a0a1a', bumpers:'#050510', trim:'#00ffcc', windows:'#001020' }, pattern:'carbon',   finish:'satin',  gradient:[90,'#0a0a1a','#001a2e'] },
+  { name: 'Ocean',     colors: { body:'#0d4f8b', roof:'#083866', hood:'#0d4f8b', trunk:'#0d4f8b', bumpers:'#0a3d70', trim:'#4fc3f7', windows:'#0a2030' }, pattern:'gradient', finish:'gloss',  gradient:[200,'#0d4f8b','#1a8fbf'] },
+  { name: 'Viper',     colors: { body:'#1a4a1a', roof:'#0f2e0f', hood:'#1a4a1a', trunk:'#1a4a1a', bumpers:'#142814', trim:'#90ee90', windows:'#0a1a10' }, pattern:'carbon',   finish:'matte',  gradient:[135,'#1a4a1a','#0f2e0f'] },
+  { name: 'Gold Rush', colors: { body:'#8b6914', roof:'#5c4410', hood:'#8b6914', trunk:'#8b6914', bumpers:'#6b5012', trim:'#f5d060', windows:'#1a1505' }, pattern:'brushed',  finish:'satin',  gradient:[90,'#b8860b','#8b6914'] },
+  { name: 'Racing',    colors: { body:'#cc0000', roof:'#f5f5f5', hood:'#cc0000', trunk:'#cc0000', bumpers:'#111111', trim:'#f5f5f5', windows:'#0a1020' }, pattern:'racing',   finish:'gloss',  gradient:[0,'#cc0000','#990000'] },
+];
+
+// ─────────────────────────────────────────────
+//  Panel definitions
+// ─────────────────────────────────────────────
+const PANELS = [
+  { key: 'body',    label: 'Body' },
+  { key: 'roof',    label: 'Roof' },
+  { key: 'hood',    label: 'Hood' },
+  { key: 'trunk',   label: 'Trunk' },
+  { key: 'bumpers', label: 'Bumpers' },
+  { key: 'trim',    label: 'Trim' },
+  { key: 'windows', label: 'Windows' },
+];
+
+const PATTERNS = [
+  { id: 'solid',   label: 'Solid' },
+  { id: 'gradient',label: 'Gradient' },
+  { id: 'carbon',  label: 'Carbon' },
+  { id: 'brushed', label: 'Brushed' },
+  { id: 'racing',  label: 'Racing' },
+  { id: 'hex',     label: 'Hex' },
+];
+
+const FINISHES = [
+  { id: 'gloss',  label: 'Gloss',  icon: '✨' },
+  { id: 'matte',  label: 'Matte',  icon: '🪨' },
+  { id: 'satin',  label: 'Satin',  icon: '🌙' },
+  { id: 'chrome', label: 'Chrome', icon: '🔮' },
+  { id: 'pearl',  label: 'Pearl',  icon: '🦋' },
+  { id: 'wrap',   label: 'Vinyl',  icon: '🎨' },
+];
+
+// ─────────────────────────────────────────────
+//  Build sidebar UI
+// ─────────────────────────────────────────────
+function buildPresets() {
+  const grid = document.getElementById('presetGrid');
+  PRESETS.forEach((p, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'preset-btn';
+    btn.innerHTML = `<div class="preset-swatch" style="background:linear-gradient(135deg,${p.colors.body},${p.colors.roof})"></div>${p.name}`;
+    btn.onclick = () => applyPreset(i, btn);
+    grid.appendChild(btn);
+  });
+}
+
+function buildPanels() {
+  const list = document.getElementById('panelList');
+  PANELS.forEach(p => {
+    const row = document.createElement('div');
+    row.className = 'panel-row';
+    const swatch = document.createElement('div');
+    swatch.className = 'color-swatch';
+    swatch.id = `swatch_${p.key}`;
+    swatch.style.background = state.panels[p.key];
+    const inp = document.createElement('input');
+    inp.type = 'color';
+    inp.value = state.panels[p.key];
+    inp.oninput = e => {
+      state.panels[p.key] = e.target.value;
+      swatch.style.background = e.target.value;
+      render();
+    };
+    swatch.appendChild(inp);
+    const label = document.createElement('span');
+    label.className = 'panel-label';
+    label.textContent = p.label;
+    row.appendChild(label);
+    row.appendChild(swatch);
+    list.appendChild(row);
+  });
+}
+
+function buildPatterns() {
+  const grid = document.getElementById('patternGrid');
+  PATTERNS.forEach(p => {
+    const btn = document.createElement('button');
+    btn.className = 'pattern-btn' + (p.id === state.pattern ? ' active' : '');
+    btn.id = `pat_${p.id}`;
+    const prev = document.createElement('canvas');
+    prev.className = 'pattern-preview';
+    prev.width = 60; prev.height = 36;
+    drawPatternPreview(prev, p.id);
+    btn.appendChild(prev);
+    btn.appendChild(document.createTextNode(p.label));
+    btn.onclick = () => {
+      document.querySelectorAll('.pattern-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.pattern = p.id;
+      render();
+    };
+    grid.appendChild(btn);
+  });
+}
+
+function buildFinishes() {
+  const grid = document.getElementById('finishGrid');
+  FINISHES.forEach(f => {
+    const btn = document.createElement('button');
+    btn.className = 'finish-btn' + (f.id === state.finish ? ' active' : '');
+    btn.id = `fin_${f.id}`;
+    btn.innerHTML = `<span class="finish-icon">${f.icon}</span>${f.label}`;
+    btn.onclick = () => {
+      document.querySelectorAll('.finish-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.finish = f.id;
+      render();
+    };
+    grid.appendChild(btn);
+  });
+}
+
+function drawPatternPreview(canvas, id) {
+  const ctx = canvas.getContext('2d');
+  const { width: w, height: h } = canvas;
+  ctx.clearRect(0, 0, w, h);
+  const c1 = '#2244aa', c2 = '#4466cc';
+  ctx.fillStyle = c1; ctx.fillRect(0, 0, w, h);
+  if (id === 'gradient') {
+    const g = ctx.createLinearGradient(0, 0, w, h);
+    g.addColorStop(0, c1); g.addColorStop(1, c2);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+  } else if (id === 'carbon') {
+    drawCarbonFiber(ctx, w, h, c1, c2, 6);
+  } else if (id === 'brushed') {
+    drawBrushed(ctx, w, h, c1, c2, 4);
+  } else if (id === 'racing') {
+    ctx.fillStyle = '#cc0000'; ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, h*0.35, w, h*0.3);
+  } else if (id === 'hex') {
+    drawHexPattern(ctx, w, h, c1, c2, 8);
+  }
+}
+
+// ─────────────────────────────────────────────
+//  Slider wiring
+// ─────────────────────────────────────────────
+document.getElementById('patternScale').oninput = e => {
+  state.patternScale = +e.target.value;
+  document.getElementById('scaleVal').textContent = e.target.value + '%';
+  render();
+};
+document.getElementById('patternOpacity').oninput = e => {
+  state.patternOpacity = +e.target.value;
+  document.getElementById('opacityVal').textContent = e.target.value + '%';
+  render();
+};
+document.getElementById('gradientAngle').oninput = e => {
+  state.gradientAngle = +e.target.value;
+  document.getElementById('angleVal').textContent = e.target.value + '°';
+  render();
+};
+
+// ─────────────────────────────────────────────
+//  Preset apply
+// ─────────────────────────────────────────────
+function applyPreset(i, btn) {
+  const p = PRESETS[i];
+  Object.assign(state.panels, p.colors);
+  state.pattern = p.pattern;
+  state.finish  = p.finish;
+  state.gradientAngle = p.gradient[0];
+
+  // Update swatches
+  PANELS.forEach(panel => {
+    const sw = document.getElementById(`swatch_${panel.key}`);
+    if (sw) {
+      sw.style.background = state.panels[panel.key];
+      sw.querySelector('input').value = state.panels[panel.key];
+    }
+  });
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  document.querySelectorAll('.pattern-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`pat_${state.pattern}`)?.classList.add('active');
+
+  document.querySelectorAll('.finish-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`fin_${state.finish}`)?.classList.add('active');
+
+  render();
+}
+
+// ─────────────────────────────────────────────
+//  View toggle
+// ─────────────────────────────────────────────
+function setView(v) {
+  state.view = v;
+  ['side','top','front'].forEach(id => {
+    document.getElementById(`v${id.charAt(0).toUpperCase()+id.slice(1)}`).classList.toggle('active', id === v);
+  });
+  render();
+}
+
+// ─────────────────────────────────────────────
+//  Pattern drawing helpers
+// ─────────────────────────────────────────────
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  return [r,g,b];
+}
+
+function lighten(hex, amt) {
+  let [r,g,b] = hexToRgb(hex);
+  r = Math.min(255, r+amt); g = Math.min(255, g+amt); b = Math.min(255, b+amt);
+  return `rgb(${r},${g},${b})`;
+}
+function darken(hex, amt) {
+  let [r,g,b] = hexToRgb(hex);
+  r = Math.max(0, r-amt); g = Math.max(0, g-amt); b = Math.max(0, b-amt);
+  return `rgb(${r},${g},${b})`;
+}
+
+function drawCarbonFiber(ctx, w, h, base, light, cellSize) {
+  const s = cellSize;
+  ctx.fillStyle = darken(base, 20);
+  ctx.fillRect(0, 0, w, h);
+  for (let y = 0; y < h; y += s * 2) {
+    for (let x = 0; x < w; x += s * 2) {
+      // 4-weave pattern
+      [[0,0,'tl'],[s,0,'tr'],[0,s,'bl'],[s,s,'br']].forEach(([dx,dy,q]) => {
+        const g = ctx.createLinearGradient(x+dx, y+dy, x+dx+s, y+dy+s);
+        const isHoriz = (q === 'tl' || q === 'br');
+        if (isHoriz) {
+          g.addColorStop(0, darken(base, 30));
+          g.addColorStop(0.5, lighten(base, 40));
+          g.addColorStop(1, darken(base, 30));
+        } else {
+          g.addColorStop(0, darken(base, 10));
+          g.addColorStop(0.5, lighten(base, 20));
+          g.addColorStop(1, darken(base, 10));
+        }
+        ctx.fillStyle = g;
+        ctx.fillRect(x+dx+0.5, y+dy+0.5, s-1, s-1);
+      });
+    }
+  }
+}
+
+function drawBrushed(ctx, w, h, base, light, density) {
+  ctx.fillStyle = base;
+  ctx.fillRect(0, 0, w, h);
+  ctx.globalAlpha = 0.3;
+  for (let i = 0; i < w; i += density) {
+    const g = ctx.createLinearGradient(i, 0, i, h);
+    g.addColorStop(0, lighten(base, 60));
+    g.addColorStop(0.5, 'transparent');
+    g.addColorStop(1, lighten(base, 60));
+    ctx.strokeStyle = g;
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, h); ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawHexPattern(ctx, w, h, base, accent, hexR) {
+  ctx.fillStyle = base;
+  ctx.fillRect(0, 0, w, h);
+  const r = hexR, dx = r * 1.75, dy = r * Math.sqrt(3);
+  for (let row = -1; row < h/dy + 2; row++) {
+    for (let col = -1; col < w/dx + 2; col++) {
+      const cx = col * dx + (row % 2 === 0 ? 0 : r * 0.875);
+      const cy = row * dy * 0.5;
+      ctx.beginPath();
+      for (let i = 0; i < 6; i++) {
+        const angle = (Math.PI / 180) * (60 * i - 30);
+        const px = cx + r * 0.85 * Math.cos(angle);
+        const py = cy + r * 0.85 * Math.sin(angle);
+        i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.strokeStyle = lighten(base, 30);
+      ctx.lineWidth = 0.8;
+      ctx.stroke();
+    }
+  }
+}
+
+function applyFinish(ctx, w, h, finish) {
+  if (finish === 'gloss') {
+    const g = ctx.createLinearGradient(0, 0, w, h * 0.4);
+    g.addColorStop(0, 'rgba(255,255,255,0.25)');
+    g.addColorStop(0.5, 'rgba(255,255,255,0.05)');
+    g.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+  } else if (finish === 'matte') {
+    ctx.fillStyle = 'rgba(0,0,0,0.08)';
+    ctx.fillRect(0, 0, w, h);
+  } else if (finish === 'chrome') {
+    const g = ctx.createLinearGradient(0, 0, w, h);
+    g.addColorStop(0, 'rgba(255,255,255,0.5)');
+    g.addColorStop(0.3, 'rgba(200,200,255,0.2)');
+    g.addColorStop(0.7, 'rgba(0,0,50,0.2)');
+    g.addColorStop(1, 'rgba(255,255,255,0.4)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+  } else if (finish === 'pearl') {
+    const g = ctx.createLinearGradient(0, 0, w, h);
+    g.addColorStop(0, 'rgba(255,220,255,0.3)');
+    g.addColorStop(0.5, 'rgba(220,255,255,0.1)');
+    g.addColorStop(1, 'rgba(255,255,220,0.3)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+  } else if (finish === 'satin') {
+    const g = ctx.createLinearGradient(0, 0, w, h * 0.6);
+    g.addColorStop(0, 'rgba(255,255,255,0.15)');
+    g.addColorStop(1, 'rgba(0,0,0,0.05)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+  }
+}
+
+// ─────────────────────────────────────────────
+//  Fill a shape with current pattern
+// ─────────────────────────────────────────────
+function fillPanel(ctx, color, w, h) {
+  const scale = state.patternScale / 50;
+  const opacity = state.patternOpacity / 100;
+  const ang = state.gradientAngle;
+
+  ctx.save();
+  ctx.globalAlpha = 1;
+
+  if (state.pattern === 'solid') {
+    ctx.fillStyle = color;
+    ctx.fillRect(0, 0, w, h);
+  } else if (state.pattern === 'gradient') {
+    const rad = ang * Math.PI / 180;
+    const cx = w/2, cy = h/2;
+    const len = Math.sqrt(w*w+h*h)/2;
+    const g = ctx.createLinearGradient(
+      cx - Math.cos(rad)*len, cy - Math.sin(rad)*len,
+      cx + Math.cos(rad)*len, cy + Math.sin(rad)*len
+    );
+    g.addColorStop(0, color);
+    g.addColorStop(1, darken(color, 50));
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+  } else if (state.pattern === 'carbon') {
+    const cell = Math.max(4, Math.round(10 * scale));
+    drawCarbonFiber(ctx, w, h, color, lighten(color, 30), cell);
+  } else if (state.pattern === 'brushed') {
+    const dens = Math.max(2, Math.round(6 * scale));
+    drawBrushed(ctx, w, h, color, lighten(color, 40), dens);
+  } else if (state.pattern === 'racing') {
+    ctx.fillStyle = color;
+    ctx.fillRect(0, 0, w, h);
+    ctx.globalAlpha = opacity;
+    const stripeH = h * 0.22;
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.fillRect(0, h*0.38, w, stripeH);
+    ctx.fillStyle = darken(color, 30);
+    ctx.fillRect(0, h*0.32, w, h*0.04);
+    ctx.fillRect(0, h*0.64, w, h*0.04);
+  } else if (state.pattern === 'hex') {
+    const r = Math.max(6, Math.round(16 * scale));
+    drawHexPattern(ctx, w, h, color, lighten(color, 40), r);
+  }
+
+  applyFinish(ctx, w, h, state.finish);
+  ctx.restore();
+}
+
+// ─────────────────────────────────────────────
+//  Draw Model 3 side view
+// ─────────────────────────────────────────────
+function drawSideView(ctx, W, H) {
+  ctx.clearRect(0, 0, W, H);
+
+  // Background
+  const bgG = ctx.createLinearGradient(0, 0, 0, H);
+  bgG.addColorStop(0, '#0d0d18');
+  bgG.addColorStop(1, '#050508');
+  ctx.fillStyle = bgG;
+  ctx.fillRect(0, 0, W, H);
+
+  // Ground reflection
+  ctx.save();
+  const gndG = ctx.createLinearGradient(0, H*0.78, 0, H);
+  gndG.addColorStop(0, 'rgba(255,255,255,0.04)');
+  gndG.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = gndG;
+  ctx.fillRect(0, H*0.78, W, H*0.22);
+  ctx.restore();
+
+  const pw = W, ph = H;
+
+  // ── Body silhouette ──
+  // Model 3 side profile approximation
+  // Ground line y
+  const gy = ph * 0.82;
+  const bodyTop = ph * 0.28;
+  const bodyBot = ph * 0.72;
+  const frontX = pw * 0.12;
+  const rearX  = pw * 0.88;
+
+  // Clip to body shape
+  ctx.save();
+  const bodyPath = new Path2D();
+  bodyPath.moveTo(frontX + pw*0.04, bodyBot);           // front-bottom
+  bodyPath.lineTo(frontX, bodyBot - ph*0.06);            // front bumper
+  bodyPath.lineTo(frontX - pw*0.01, bodyBot - ph*0.12); // front lower
+  bodyPath.lineTo(frontX + pw*0.02, bodyTop + ph*0.08); // hood start
+  bodyPath.lineTo(frontX + pw*0.12, bodyTop + ph*0.02); // hood top
+  bodyPath.lineTo(frontX + pw*0.20, bodyTop);            // windshield base
+  bodyPath.bezierCurveTo(
+    frontX + pw*0.26, bodyTop - ph*0.02,
+    frontX + pw*0.32, bodyTop - ph*0.16,
+    pw*0.50,          bodyTop - ph*0.18   // roof peak
+  );
+  bodyPath.bezierCurveTo(
+    pw*0.60,          bodyTop - ph*0.18,
+    rearX - pw*0.22,  bodyTop - ph*0.10,
+    rearX - pw*0.18,  bodyTop + ph*0.02
+  );
+  bodyPath.lineTo(rearX - pw*0.06, bodyTop + ph*0.10);  // rear glass
+  bodyPath.lineTo(rearX + pw*0.01, bodyTop + ph*0.18);  // trunk
+  bodyPath.lineTo(rearX + pw*0.02, bodyBot - ph*0.06);  // rear bumper top
+  bodyPath.lineTo(rearX - pw*0.02, bodyBot);            // rear bottom
+  bodyPath.closePath();
+  ctx.clip(bodyPath);
+  fillPanel(ctx, state.panels.body, W, H);
+  ctx.restore();
+
+  // ── Hood ──
+  ctx.save();
+  const hoodPath = new Path2D();
+  hoodPath.moveTo(frontX + pw*0.02, bodyTop + ph*0.08);
+  hoodPath.lineTo(frontX - pw*0.01, bodyBot - ph*0.12);
+  hoodPath.lineTo(frontX - pw*0.01, bodyBot - ph*0.22);
+  hoodPath.lineTo(frontX + pw*0.12, bodyTop + ph*0.02);
+  hoodPath.lineTo(frontX + pw*0.20, bodyTop);
+  hoodPath.lineTo(frontX + pw*0.19, bodyTop - ph*0.02);
+  hoodPath.closePath();
+  ctx.clip(hoodPath);
+  fillPanel(ctx, state.panels.hood, W, H);
+  ctx.restore();
+
+  // ── Roof ──
+  ctx.save();
+  const roofPath = new Path2D();
+  roofPath.moveTo(frontX + pw*0.20, bodyTop);
+  roofPath.bezierCurveTo(
+    frontX + pw*0.26, bodyTop - ph*0.02,
+    frontX + pw*0.32, bodyTop - ph*0.16,
+    pw*0.50,          bodyTop - ph*0.18
+  );
+  roofPath.bezierCurveTo(
+    pw*0.60,          bodyTop - ph*0.18,
+    rearX - pw*0.22,  bodyTop - ph*0.10,
+    rearX - pw*0.18,  bodyTop + ph*0.02
+  );
+  roofPath.lineTo(rearX - pw*0.22, bodyTop - ph*0.02);
+  roofPath.bezierCurveTo(
+    pw*0.60,          bodyTop - ph*0.20,
+    pw*0.50,          bodyTop - ph*0.22,
+    frontX + pw*0.34, bodyTop - ph*0.20
+  );
+  roofPath.lineTo(frontX + pw*0.22, bodyTop - ph*0.04);
+  roofPath.closePath();
+  ctx.clip(roofPath);
+  fillPanel(ctx, state.panels.roof, W, H);
+  ctx.restore();
+
+  // ── Windows ──
+  ctx.save();
+  // Windshield
+  const windshield = new Path2D();
+  windshield.moveTo(frontX + pw*0.20, bodyTop);
+  windshield.lineTo(frontX + pw*0.22, bodyTop - ph*0.04);
+  windshield.lineTo(frontX + pw*0.34, bodyTop - ph*0.20);
+  windshield.lineTo(frontX + pw*0.32, bodyTop - ph*0.16);
+  windshield.bezierCurveTo(frontX + pw*0.26, bodyTop - ph*0.02, frontX + pw*0.22, bodyTop, frontX + pw*0.20, bodyTop);
+  windshield.closePath();
+  ctx.clip(windshield);
+  const wg = ctx.createLinearGradient(frontX+pw*0.20, bodyTop, frontX+pw*0.34, bodyTop-ph*0.20);
+  wg.addColorStop(0, state.panels.windows);
+  wg.addColorStop(1, lighten(state.panels.windows, 30));
+  ctx.fillStyle = wg; ctx.fillRect(0, 0, W, H);
+  ctx.restore();
+
+  // Front side window
+  ctx.save();
+  const fw = new Path2D();
+  fw.moveTo(frontX + pw*0.22, bodyTop - ph*0.04);
+  fw.lineTo(frontX + pw*0.34, bodyTop - ph*0.20);
+  fw.lineTo(pw*0.50, bodyTop - ph*0.22);
+  fw.lineTo(pw*0.50, bodyTop - ph*0.03);
+  fw.lineTo(frontX + pw*0.28, bodyTop - ph*0.02);
+  fw.closePath();
+  ctx.clip(fw);
+  const fwg = ctx.createLinearGradient(frontX+pw*0.22, bodyTop-ph*0.04, pw*0.50, bodyTop-ph*0.22);
+  fwg.addColorStop(0, darken(state.panels.windows, 10));
+  fwg.addColorStop(1, lighten(state.panels.windows, 15));
+  ctx.fillStyle = fwg; ctx.fillRect(0, 0, W, H);
+  // Glare
+  ctx.fillStyle = 'rgba(255,255,255,0.08)';
+  ctx.fillRect(0, 0, W, H);
+  ctx.restore();
+
+  // Rear window
+  ctx.save();
+  const rw = new Path2D();
+  rw.moveTo(pw*0.50, bodyTop - ph*0.22);
+  rw.bezierCurveTo(pw*0.60, bodyTop-ph*0.18, rearX-pw*0.22, bodyTop-ph*0.10, rearX-pw*0.18, bodyTop+ph*0.02);
+  rw.lineTo(rearX - pw*0.06, bodyTop + ph*0.10);
+  rw.lineTo(pw*0.52, bodyTop - ph*0.03);
+  rw.closePath();
+  ctx.clip(rw);
+  const rwg = ctx.createLinearGradient(pw*0.50, bodyTop-ph*0.22, rearX-pw*0.18, bodyTop+ph*0.02);
+  rwg.addColorStop(0, lighten(state.panels.windows, 10));
+  rwg.addColorStop(1, darken(state.panels.windows, 20));
+  ctx.fillStyle = rwg; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = 'rgba(255,255,255,0.05)';
+  ctx.fillRect(0, 0, W, H);
+  ctx.restore();
+
+  // ── Trim / Door handles ──
+  ctx.save();
+  const trimY = ph * 0.60;
+  ctx.fillStyle = state.panels.trim;
+  ctx.globalAlpha = 0.9;
+  // Side sill trim
+  ctx.beginPath();
+  ctx.roundRect(frontX + pw*0.04, trimY + ph*0.07, rearX - frontX - pw*0.06, ph*0.018, 3);
+  ctx.fill();
+  // Front door handle
+  ctx.beginPath();
+  ctx.roundRect(pw*0.38, trimY - ph*0.01, pw*0.07, ph*0.022, 4);
+  ctx.fill();
+  // Rear door handle
+  ctx.beginPath();
+  ctx.roundRect(pw*0.57, trimY - ph*0.01, pw*0.07, ph*0.022, 4);
+  ctx.fill();
+  ctx.restore();
+
+  // ── Wheels ──
+  drawWheel(ctx, frontX + pw*0.12, gy, ph*0.135);
+  drawWheel(ctx, rearX - pw*0.12, gy, ph*0.135);
+
+  // ── Door lines (subtle) ──
+  ctx.save();
+  ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+  ctx.lineWidth = 1.2;
+  // Front door gap
+  ctx.beginPath();
+  ctx.moveTo(pw*0.465, bodyTop - ph*0.01);
+  ctx.lineTo(pw*0.46,  bodyBot - ph*0.02);
+  ctx.stroke();
+  ctx.restore();
+
+  // ── Headlights ──
+  ctx.save();
+  const hlg = ctx.createLinearGradient(frontX-pw*0.01, ph*0.48, frontX+pw*0.08, ph*0.42);
+  hlg.addColorStop(0, '#ffe066');
+  hlg.addColorStop(1, '#fff5cc');
+  ctx.fillStyle = hlg;
+  ctx.beginPath();
+  ctx.ellipse(frontX + pw*0.01, ph*0.46, pw*0.026, ph*0.04, -0.3, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(255,240,150,0.3)';
+  ctx.beginPath();
+  ctx.ellipse(frontX - pw*0.02, ph*0.46, pw*0.05, ph*0.032, -0.3, 0, Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+
+  // ── Taillights ──
+  ctx.save();
+  const tlg = ctx.createLinearGradient(rearX-pw*0.04, ph*0.44, rearX+pw*0.02, ph*0.56);
+  tlg.addColorStop(0, '#cc0000');
+  tlg.addColorStop(1, '#ff4444');
+  ctx.fillStyle = tlg;
+  ctx.beginPath();
+  ctx.ellipse(rearX + pw*0.01, ph*0.50, pw*0.018, ph*0.06, 0.2, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(200,0,0,0.25)';
+  ctx.beginPath();
+  ctx.ellipse(rearX + pw*0.03, ph*0.50, pw*0.04, ph*0.04, 0.2, 0, Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+
+  // ── Body outline ──
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke(bodyPath);
+  ctx.restore();
+
+  // ── Shadow under car ──
+  ctx.save();
+  const shadowG = ctx.createRadialGradient(pw*0.5, gy+ph*0.01, 0, pw*0.5, gy+ph*0.01, pw*0.35);
+  shadowG.addColorStop(0, 'rgba(0,0,0,0.45)');
+  shadowG.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = shadowG;
+  ctx.fillRect(frontX, gy, rearX-frontX, ph*0.06);
+  ctx.restore();
+}
+
+function drawWheel(ctx, cx, cy, r) {
+  // Tire
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI*2);
+  ctx.fillStyle = '#111';
+  ctx.fill();
+  ctx.strokeStyle = '#333';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Wheel center
+  ctx.beginPath();
+  ctx.arc(cx, cy, r * 0.7, 0, Math.PI*2);
+  const wg = ctx.createRadialGradient(cx - r*0.15, cy - r*0.15, 0, cx, cy, r*0.7);
+  wg.addColorStop(0, '#666');
+  wg.addColorStop(0.4, '#333');
+  wg.addColorStop(1, '#1a1a1a');
+  ctx.fillStyle = wg;
+  ctx.fill();
+
+  // Spokes (Aero wheel style)
+  for (let i = 0; i < 5; i++) {
+    const ang = (Math.PI*2 / 5) * i - Math.PI/2;
+    const x1 = cx + Math.cos(ang) * r*0.12;
+    const y1 = cy + Math.sin(ang) * r*0.12;
+    const x2 = cx + Math.cos(ang) * r*0.62;
+    const y2 = cy + Math.sin(ang) * r*0.62;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.strokeStyle = state.panels.trim;
+    ctx.lineWidth = r * 0.14;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+    ctx.strokeStyle = darken(state.panels.trim, 30);
+    ctx.lineWidth = r * 0.06;
+    ctx.stroke();
+  }
+
+  // Hub cap
+  ctx.beginPath();
+  ctx.arc(cx, cy, r * 0.12, 0, Math.PI*2);
+  ctx.fillStyle = '#888';
+  ctx.fill();
+
+  // Tire highlight
+  ctx.beginPath();
+  ctx.arc(cx - r*0.3, cy - r*0.3, r*0.18, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(255,255,255,0.06)';
+  ctx.fill();
+  ctx.restore();
+}
+
+// ─────────────────────────────────────────────
+//  Top view
+// ─────────────────────────────────────────────
+function drawTopView(ctx, W, H) {
+  ctx.clearRect(0, 0, W, H);
+  const bgG = ctx.createLinearGradient(0, 0, 0, H);
+  bgG.addColorStop(0, '#0d0d18'); bgG.addColorStop(1, '#050508');
+  ctx.fillStyle = bgG; ctx.fillRect(0, 0, W, H);
+
+  const cx = W/2, cy = H/2;
+  const carL = W * 0.78, carW = H * 0.50;
+  const x0 = cx - carL/2, y0 = cy - carW/2;
+
+  ctx.save();
+  const bodyTop = new Path2D();
+  bodyTop.moveTo(x0 + carL*0.10, y0);
+  bodyTop.bezierCurveTo(x0 + carL*0.30, y0 - carW*0.05, x0 + carL*0.70, y0 - carW*0.05, x0 + carL*0.90, y0);
+  bodyTop.lineTo(x0 + carL, y0 + carW*0.12);
+  bodyTop.lineTo(x0 + carL, y0 + carW*0.88);
+  bodyTop.lineTo(x0 + carL*0.90, y0 + carW);
+  bodyTop.bezierCurveTo(x0 + carL*0.70, y0 + carW*1.05, x0 + carL*0.30, y0 + carW*1.05, x0 + carL*0.10, y0 + carW);
+  bodyTop.lineTo(x0, y0 + carW*0.88);
+  bodyTop.lineTo(x0, y0 + carW*0.12);
+  bodyTop.closePath();
+  ctx.clip(bodyTop);
+  fillPanel(ctx, state.panels.body, W, H);
+  ctx.restore();
+
+  // Roof panel (darker center strip)
+  ctx.save();
+  const roofPanel = new Path2D();
+  const rw = carW * 0.55, rx = cx - rw/2;
+  roofPanel.moveTo(rx, y0 + carW*0.15);
+  roofPanel.lineTo(rx + rw, y0 + carW*0.15);
+  roofPanel.lineTo(rx + rw, y0 + carW*0.85);
+  roofPanel.lineTo(rx, y0 + carW*0.85);
+  roofPanel.closePath();
+  ctx.clip(roofPanel);
+  fillPanel(ctx, state.panels.roof, W, H);
+  ctx.restore();
+
+  // Windows top hint
+  ctx.save();
+  ctx.fillStyle = state.panels.windows;
+  ctx.globalAlpha = 0.7;
+  ctx.beginPath();
+  ctx.roundRect(cx - carL*0.10, y0 + carW*0.15, carL*0.20, carW*0.70, 4);
+  ctx.fill();
+  ctx.restore();
+
+  // Outline
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.lineWidth = 2;
+  ctx.stroke(bodyTop);
+  ctx.restore();
+
+  // Wheels (top view — rectangles)
+  [[x0 + carL*0.18, y0 - carW*0.06],[x0 + carL*0.18, y0 + carW*0.94],
+   [x0 + carL*0.82, y0 - carW*0.06],[x0 + carL*0.82, y0 + carW*0.94]].forEach(([wx,wy]) => {
+    ctx.save();
+    ctx.fillStyle = '#1a1a1a';
+    ctx.strokeStyle = '#444';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(wx - carW*0.07, wy, carW*0.14, carW*0.12, 3);
+    ctx.fill(); ctx.stroke();
+    ctx.restore();
+  });
+
+  // Center line decoration
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([8, 8]);
+  ctx.beginPath();
+  ctx.moveTo(cx, y0); ctx.lineTo(cx, y0 + carW);
+  ctx.stroke();
+  ctx.restore();
+}
+
+// ─────────────────────────────────────────────
+//  Front view
+// ─────────────────────────────────────────────
+function drawFrontView(ctx, W, H) {
+  ctx.clearRect(0, 0, W, H);
+  const bgG = ctx.createLinearGradient(0, 0, 0, H);
+  bgG.addColorStop(0, '#0d0d18'); bgG.addColorStop(1, '#050508');
+  ctx.fillStyle = bgG; ctx.fillRect(0, 0, W, H);
+
+  const cx = W/2, cy = H*0.52;
+  const carW = W*0.65, carH = H*0.52;
+
+  // Body
+  ctx.save();
+  const frontBody = new Path2D();
+  frontBody.moveTo(cx - carW/2 + carW*0.04, cy + carH*0.30);
+  frontBody.lineTo(cx - carW/2, cy + carH*0.10);
+  frontBody.lineTo(cx - carW/2 + carW*0.02, cy - carH*0.05);
+  frontBody.lineTo(cx - carW/2 + carW*0.10, cy - carH*0.25);
+  frontBody.bezierCurveTo(cx - carW*0.18, cy - carH*0.50, cx - carW*0.12, cy - carH*0.55, cx, cy - carH*0.58);
+  frontBody.bezierCurveTo(cx + carW*0.12, cy - carH*0.55, cx + carW*0.18, cy - carH*0.50, cx + carW/2 - carW*0.10, cy - carH*0.25);
+  frontBody.lineTo(cx + carW/2 - carW*0.02, cy - carH*0.05);
+  frontBody.lineTo(cx + carW/2, cy + carH*0.10);
+  frontBody.lineTo(cx + carW/2 - carW*0.04, cy + carH*0.30);
+  frontBody.closePath();
+  ctx.clip(frontBody);
+  fillPanel(ctx, state.panels.body, W, H);
+  ctx.restore();
+
+  // Windshield
+  ctx.save();
+  const ws = new Path2D();
+  ws.moveTo(cx - carW*0.32, cy - carH*0.12);
+  ws.lineTo(cx - carW*0.24, cy - carH*0.48);
+  ws.lineTo(cx + carW*0.24, cy - carH*0.48);
+  ws.lineTo(cx + carW*0.32, cy - carH*0.12);
+  ws.closePath();
+  ctx.clip(ws);
+  const wsg = ctx.createLinearGradient(cx, cy-carH*0.48, cx, cy-carH*0.12);
+  wsg.addColorStop(0, lighten(state.panels.windows, 20));
+  wsg.addColorStop(1, state.panels.windows);
+  ctx.fillStyle = wsg; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = 'rgba(255,255,255,0.12)'; ctx.fillRect(0, 0, W, H);
+  ctx.restore();
+
+  // Hood
+  ctx.save();
+  const hoodF = new Path2D();
+  hoodF.moveTo(cx - carW/2 + carW*0.02, cy - carH*0.05);
+  hoodF.lineTo(cx - carW*0.32, cy - carH*0.12);
+  hoodF.lineTo(cx + carW*0.32, cy - carH*0.12);
+  hoodF.lineTo(cx + carW/2 - carW*0.02, cy - carH*0.05);
+  hoodF.closePath();
+  ctx.clip(hoodF);
+  fillPanel(ctx, state.panels.hood, W, H);
+  ctx.restore();
+
+  // Bumper
+  ctx.save();
+  const bumper = new Path2D();
+  bumper.moveTo(cx - carW/2 + carW*0.04, cy + carH*0.30);
+  bumper.lineTo(cx - carW/2, cy + carH*0.10);
+  bumper.lineTo(cx - carW/2 + carW*0.02, cy - carH*0.05);
+  bumper.lineTo(cx - carW/2 + carW*0.06, cy - carH*0.05);
+  bumper.lineTo(cx - carW/2 + carW*0.04, cy + carH*0.10);
+  bumper.lineTo(cx - carW/2 + carW*0.06, cy + carH*0.30);
+  bumper.moveTo(cx + carW/2 - carW*0.04, cy + carH*0.30);
+  bumper.lineTo(cx + carW/2, cy + carH*0.10);
+  bumper.lineTo(cx + carW/2 - carW*0.02, cy - carH*0.05);
+  bumper.lineTo(cx + carW/2 - carW*0.06, cy - carH*0.05);
+  bumper.lineTo(cx + carW/2 - carW*0.04, cy + carH*0.10);
+  bumper.lineTo(cx + carW/2 - carW*0.06, cy + carH*0.30);
+  ctx.clip(bumper);
+  fillPanel(ctx, state.panels.bumpers, W, H);
+  ctx.restore();
+
+  // Headlights
+  [[cx - carW*0.36, cy - carH*0.02],[cx + carW*0.36, cy - carH*0.02]].forEach(([lx, ly]) => {
+    ctx.save();
+    const lg = ctx.createRadialGradient(lx, ly, 0, lx, ly, carW*0.10);
+    lg.addColorStop(0, '#fffbcc');
+    lg.addColorStop(0.5, '#ffe066');
+    lg.addColorStop(1, 'rgba(255,200,0,0)');
+    ctx.fillStyle = lg;
+    ctx.beginPath();
+    ctx.ellipse(lx, ly, carW*0.10, carH*0.06, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  });
+
+  // Trim strip
+  ctx.save();
+  ctx.fillStyle = state.panels.trim;
+  ctx.globalAlpha = 0.85;
+  ctx.beginPath();
+  ctx.roundRect(cx - carW*0.40, cy - carH*0.08, carW*0.80, carH*0.022, 3);
+  ctx.fill();
+  ctx.restore();
+
+  // Outline
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke(frontBody);
+  ctx.restore();
+
+  // Wheels
+  [[cx - carW*0.44, cy + carH*0.30],[cx + carW*0.44, cy + carH*0.30]].forEach(([wx, wy]) => {
+    drawWheel(ctx, wx, wy, carH*0.18);
+  });
+
+  // Shadow
+  ctx.save();
+  const sg = ctx.createEllipse ? null : ctx.createRadialGradient(cx, cy+carH*0.30, 0, cx, cy+carH*0.30, carW*0.45);
+  if (sg) {
+    sg.addColorStop(0, 'rgba(0,0,0,0.5)');
+    sg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = sg;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy+carH*0.42, carW*0.45, carH*0.05, 0, 0, Math.PI*2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+// ─────────────────────────────────────────────
+//  Main render
+// ─────────────────────────────────────────────
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+
+function render() {
+  if (state.view === 'side') drawSideView(ctx, W, H);
+  else if (state.view === 'top') drawTopView(ctx, W, H);
+  else drawFrontView(ctx, W, H);
+}
+
+// ─────────────────────────────────────────────
+//  Download
+// ─────────────────────────────────────────────
+function downloadWrap() {
+  render();
+  const a = document.createElement('a');
+  a.download = `model3_wrap_${state.view}_${Date.now()}.png`;
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+}
+
+// ─────────────────────────────────────────────
+//  Randomize
+// ─────────────────────────────────────────────
+function randomize() {
+  const rnd = () => '#' + Math.floor(Math.random()*0xffffff).toString(16).padStart(6,'0');
+  Object.keys(state.panels).forEach(k => { state.panels[k] = rnd(); });
+  state.pattern = PATTERNS[Math.floor(Math.random()*PATTERNS.length)].id;
+  state.finish  = FINISHES[Math.floor(Math.random()*FINISHES.length)].id;
+  state.patternScale = 10 + Math.floor(Math.random()*90);
+  state.patternOpacity = 40 + Math.floor(Math.random()*60);
+  state.gradientAngle = Math.floor(Math.random()*360);
+
+  // Sync UI
+  PANELS.forEach(p => {
+    const sw = document.getElementById(`swatch_${p.key}`);
+    if (sw) { sw.style.background = state.panels[p.key]; sw.querySelector('input').value = state.panels[p.key]; }
+  });
+  document.querySelectorAll('.pattern-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`pat_${state.pattern}`)?.classList.add('active');
+  document.querySelectorAll('.finish-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`fin_${state.finish}`)?.classList.add('active');
+  document.getElementById('patternScale').value = state.patternScale;
+  document.getElementById('scaleVal').textContent = state.patternScale + '%';
+  document.getElementById('patternOpacity').value = state.patternOpacity;
+  document.getElementById('opacityVal').textContent = state.patternOpacity + '%';
+  document.getElementById('gradientAngle').value = state.gradientAngle;
+  document.getElementById('angleVal').textContent = state.gradientAngle + '°';
+
+  render();
+}
+
+// ─────────────────────────────────────────────
+//  Init
+// ─────────────────────────────────────────────
+buildPresets();
+buildPanels();
+buildPatterns();
+buildFinishes();
+render();
+</script>
+</body>
+</html>
